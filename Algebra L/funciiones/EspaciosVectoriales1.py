@@ -1,52 +1,53 @@
-def verificar_secuencia(secuencia1, secuencia2, escalar):
-    """Verifica si dos secuencias de números forman un espacio vectorial."""
-    if len(secuencia1) != len(secuencia2):
-        return "Error: Las secuencias deben tener la misma longitud."
-    
-    # Suma de secuencias
-    suma = [x + y for x, y in zip(secuencia1, secuencia2)]
-    # Producto por un escalar
-    producto_escalar = [escalar * x for x in secuencia1]
+def suma_vectores(v1, v2):
+    """
+    Suma dos vectores v1 y v2 de igual dimensión.
+    :param v1: Lista representando el primer vector.
+    :param v2: Lista representando el segundo vector.
+    :return: Lista con la suma de los vectores o error si las dimensiones no coinciden.
+    """
+    if len(v1) != len(v2):
+        raise ValueError("Los vectores deben tener la misma dimensión para ser sumados.")
+    return [a + b for a, b in zip(v1, v2)]
 
-    return {
-        "suma": suma,
-        "producto_escalar": producto_escalar,
-        "mensaje": "Se cumple que es un espacio vectorial bajo las operaciones de suma y producto escalar."
-    }
 
-def verificar_polinomio(polinomio1, polinomio2, escalar):
-    """Verifica si los polinomios forman un espacio vectorial."""
-    # Aseguramos que ambos polinomios tengan la misma longitud
-    max_grado = max(len(polinomio1), len(polinomio2))
-    polinomio1 += [0] * (max_grado - len(polinomio1))
-    polinomio2 += [0] * (max_grado - len(polinomio2))
+def resta_vectores(v1, v2):
+    """
+    Resta dos vectores v1 y v2 de igual dimensión.
+    :param v1: Lista representando el primer vector.
+    :param v2: Lista representando el segundo vector.
+    :return: Lista con la resta de los vectores o error si las dimensiones no coinciden.
+    """
+    if len(v1) != len(v2):
+        raise ValueError("Los vectores deben tener la misma dimensión para ser restados.")
+    return [a - b for a, b in zip(v1, v2)]
 
-    # Suma de polinomios
-    suma = [a + b for a, b in zip(polinomio1, polinomio2)]
-    # Producto por un escalar
-    producto_escalar = [escalar * a for a in polinomio1]
 
-    return {
-        "suma": suma,
-        "producto_escalar": producto_escalar,
-        "mensaje": "Se cumple que es un espacio vectorial bajo las operaciones de suma y producto escalar."
-    }
+def escalar_por_vector(escalar, vector):
+    """
+    Multiplica un vector por un escalar.
+    :param escalar: Número para escalar el vector.
+    :param vector: Lista representando el vector.
+    :return: Lista con el vector escalado.
+    """
+    return [escalar * x for x in vector]
 
-def verificar_funcion(funcion1, funcion2, escalar):
-    """Verifica si las funciones forman un espacio vectorial."""
-    # Valores de t para verificar (en un conjunto D simple de puntos)
-    t_values = [0, 1, 2, 3]
-    suma = []
-    producto_escalar = []
 
-    for t in t_values:
-        f1_val = eval(funcion1.replace("t", str(t)))
-        f2_val = eval(funcion2.replace("t", str(t)))
-        suma.append(f1_val + f2_val)
-        producto_escalar.append(escalar * f1_val)
+def norma_vector(vector):
+    """
+    Calcula la norma (longitud) de un vector.
+    :param vector: Lista representando el vector.
+    :return: Número con la norma del vector.
+    """
+    return sum(x ** 2 for x in vector) ** 0.5
 
-    return {
-        "suma": suma,
-        "producto_escalar": producto_escalar,
-        "mensaje": "Se cumple que es un espacio vectorial bajo las operaciones de suma y producto escalar."
-    }
+
+def producto_punto(v1, v2):
+    """
+    Calcula el producto punto de dos vectores de igual dimensión.
+    :param v1: Lista representando el primer vector.
+    :param v2: Lista representando el segundo vector.
+    :return: Número con el resultado del producto punto.
+    """
+    if len(v1) != len(v2):
+        raise ValueError("Los vectores deben tener la misma dimensión para calcular el producto punto.")
+    return sum(a * b for a, b in zip(v1, v2))

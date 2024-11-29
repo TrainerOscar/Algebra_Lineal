@@ -1,112 +1,133 @@
-import tkinter as tk
-from tkinter import messagebox, scrolledtext
-from fractions import Fraction
+from kivy.app import App
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.button import Button
+from kivy.uix.textinput import TextInput
+from kivy.uix.label import Label
+from funciiones.EspaciosVectoriales1 import suma_vectores, escalar_por_vector
+from funciiones.MatricesTranspuestas import transponer_matriz
+from funciiones.DeterminanteXCofactor import determinante_por_cofactor
+from funciiones.MatrizCramer import resolver_sistema_cramer
+from funciiones.MatrizEscalonadayGJ import escalonar_matriz
+from funciiones.MultiplicacionMatrices import multiplicar_matrices
+from funciiones.MultiplicacionTranspuestas import multiplicar_matrices_transpuestas
+from funciiones.OperacionesVectores import producto_punto
+from funciiones.ProductoMatrizVector import producto_matriz_vector
 
-# Importar funciones desde los archivos creados
-from funciiones.DeterminanteXCofactor import calcular_determinante
-from funciiones.MatrizCramer import metodo_cramer
-from funciiones.MatricesTranspuestas import matriz_transpuesta
-from funciiones.MatrizEscalonadayGJ import forma_escalonada, verificar_solucion, resolver_sistema
+class AlgebraLinealApp(App):
+    def build(self):
+        self.root = BoxLayout(orientation='vertical', padding=10, spacing=10)
 
+        # Título
+        self.title_label = Label(text="Calculadora de Álgebra Lineal", font_size=24)
+        self.root.add_widget(self.title_label)
 
-class App(tk.Tk):
-    def __init__(self):
-        super().__init__()
-        self.title("Calculadora de Álgebra Lineal")
-        self.geometry("600x500")
-        self.configure(bg="#f0f0f0")
+        # Entrada de datos
+        self.input_label = Label(text="Ingrese los datos (formato: listas separadas por comas):")
+        self.root.add_widget(self.input_label)
+        self.input_field = TextInput(hint_text="Ejemplo: [[1,2],[3,4]]", multiline=False)
+        self.root.add_widget(self.input_field)
 
-        # Widgets principales
-        self.label_entrada = tk.Label(self, text="Ingrese la matriz:", bg="#f0f0f0", font=("Arial", 12))
-        self.label_entrada.pack(pady=10)
+        # Resultado
+        self.result_label = Label(text="Resultado:", font_size=18)
+        self.root.add_widget(self.result_label)
 
-        self.texto_matriz = scrolledtext.ScrolledText(self, height=5, width=50, font=("Courier", 12))
-        self.texto_matriz.pack(pady=5)
+        # Botones para operaciones
+        operations = [
+            ("Espacios Vectoriales (Suma)", self.calculate_suma_vectores),
+            ("Matriz Transpuesta", self.calculate_transponer_matriz),
+            ("Determinante por Cofactor", self.calculate_determinante_cofactor),
+            ("Método de Cramer", self.calculate_cramer),
+            ("Matriz Escalonada", self.calculate_escalonar_matriz),
+            ("Multiplicación de Matrices", self.calculate_multiplicar_matrices),
+            ("Multiplicación de Matrices Transpuestas", self.calculate_multiplicar_matrices_transpuestas),
+            ("Producto Punto", self.calculate_producto_punto),
+            ("Producto Matriz-Vector", self.calculate_producto_matriz_vector),
+        ]
 
-        # Botones de opciones
-        botones_frame = tk.Frame(self, bg="#f0f0f0")
-        botones_frame.pack(pady=10)
+        for label, func in operations:
+            button = Button(text=label, size_hint_y=None, height=50)
+            button.bind(on_press=func)
+            self.root.add_widget(button)
 
-        self.boton_determinante = tk.Button(botones_frame, text="Determinante", command=self.calcular_determinante, width=15)
-        self.boton_determinante.grid(row=0, column=0, padx=5, pady=5)
+        return self.root
 
-        self.boton_transpuesta = tk.Button(botones_frame, text="Transpuesta", command=self.calcular_transpuesta, width=15)
-        self.boton_transpuesta.grid(row=0, column=1, padx=5, pady=5)
-
-        self.boton_cramer = tk.Button(botones_frame, text="Método de Cramer", command=self.metodo_cramer, width=15)
-        self.boton_cramer.grid(row=1, column=0, padx=5, pady=5)
-
-        self.boton_escalonada = tk.Button(botones_frame, text="Forma Escalonada", command=self.calcular_escalonada, width=15)
-        self.boton_escalonada.grid(row=1, column=1, padx=5, pady=5)
-
-        # Área de resultados
-        self.label_resultado = tk.Label(self, text="Resultado:", bg="#f0f0f0", font=("Arial", 12))
-        self.label_resultado.pack(pady=10)
-
-        self.texto_resultado = scrolledtext.ScrolledText(self, height=10, width=60, state="disabled", font=("Courier", 12))
-        self.texto_resultado.pack(pady=5)
-
-    def obtener_matriz(self):
-        """Convierte la entrada del usuario en una lista de listas."""
+    def calculate_suma_vectores(self, instance):
         try:
-            texto = self.texto_matriz.get("1.0", tk.END).strip()
-            matriz = [[Fraction(valor) for valor in fila.split()] for fila in texto.split(';')]
-            return matriz
+            data = eval(self.input_field.text)
+            v1, v2 = data
+            result = suma_vectores(v1, v2)
+            self.result_label.text = f"Resultado: {result}"
         except Exception as e:
-            messagebox.showerror("Error", f"Error al procesar la matriz: {e}")
-            return None
+            self.result_label.text = f"Error: {e}"
 
-    def mostrar_resultado(self, texto):
-        """Muestra el resultado en el área de texto."""
-        self.texto_resultado.config(state="normal")
-        self.texto_resultado.delete("1.0", tk.END)
-        self.texto_resultado.insert(tk.END, texto)
-        self.texto_resultado.config(state="disabled")
+    def calculate_transponer_matriz(self, instance):
+        try:
+            data = eval(self.input_field.text)
+            result = transponer_matriz(data)
+            self.result_label.text = f"Resultado: {result}"
+        except Exception as e:
+            self.result_label.text = f"Error: {e}"
 
-    def calcular_determinante(self):
-        """Calcula el determinante de la matriz ingresada."""
-        matriz = self.obtener_matriz()
-        if matriz:
-            if len(matriz) != len(matriz[0]):
-                messagebox.showwarning("Advertencia", "La matriz debe ser cuadrada para calcular el determinante.")
-                return
-            resultado = calcular_determinante(matriz)
-            self.mostrar_resultado(f"Determinante: {resultado}")
+    def calculate_determinante_cofactor(self, instance):
+        try:
+            data = eval(self.input_field.text)
+            result = determinante_por_cofactor(data)
+            self.result_label.text = f"Resultado: {result}"
+        except Exception as e:
+            self.result_label.text = f"Error: {e}"
 
-    def calcular_transpuesta(self):
-        """Calcula la transpuesta de la matriz ingresada."""
-        matriz = self.obtener_matriz()
-        if matriz:
-            transpuesta = matriz_transpuesta(matriz)
-            transpuesta_str = "\n".join(["\t".join(map(str, fila)) for fila in transpuesta])
-            self.mostrar_resultado(f"Transpuesta:\n{transpuesta_str}")
+    def calculate_cramer(self, instance):
+        try:
+            data = eval(self.input_field.text)
+            matriz, vector = data
+            result = resolver_sistema_cramer(matriz, vector)
+            self.result_label.text = f"Resultado: {result}"
+        except Exception as e:
+            self.result_label.text = f"Error: {e}"
 
-    def metodo_cramer(self):
-        """Resuelve un sistema de ecuaciones usando el método de Cramer."""
-        matriz = self.obtener_matriz()
-        if matriz:
-            try:
-                resultado = metodo_cramer(matriz)
-                soluciones = "\n".join([f"X{i + 1} = {valor}" for i, valor in enumerate(resultado)])
-                self.mostrar_resultado(f"Soluciones:\n{soluciones}")
-            except Exception as e:
-                messagebox.showerror("Error", f"Error en el método de Cramer: {e}")
+    def calculate_escalonar_matriz(self, instance):
+        try:
+            data = eval(self.input_field.text)
+            result = escalonar_matriz(data)
+            self.result_label.text = f"Resultado: {result}"
+        except Exception as e:
+            self.result_label.text = f"Error: {e}"
 
-    def calcular_escalonada(self):
-        """Calcula la forma escalonada de una matriz."""
-        matriz = self.obtener_matriz()
-        if matriz:
-            matriz_escalonada, pivotes = forma_escalonada(matriz)
-            escalonada_str = "\n".join(["\t".join(map(str, fila)) for fila in matriz_escalonada])
-            tipo_solucion = verificar_solucion(matriz_escalonada, pivotes)
-            if "Solución única" in tipo_solucion:
-                soluciones = resolver_sistema(matriz_escalonada)
-                soluciones_str = "\n".join([f"X{i + 1} = {valor}" for i, valor in enumerate(soluciones)])
-                self.mostrar_resultado(f"Escalonada:\n{escalonada_str}\n{tipo_solucion}\nSoluciones:\n{soluciones_str}")
-            else:
-                self.mostrar_resultado(f"Escalonada:\n{escalonada_str}\n{tipo_solucion}")
+    def calculate_multiplicar_matrices(self, instance):
+        try:
+            data = eval(self.input_field.text)
+            m1, m2 = data
+            result = multiplicar_matrices(m1, m2)
+            self.result_label.text = f"Resultado: {result}"
+        except Exception as e:
+            self.result_label.text = f"Error: {e}"
 
+    def calculate_multiplicar_matrices_transpuestas(self, instance):
+        try:
+            data = eval(self.input_field.text)
+            m1, m2 = data
+            result = multiplicar_matrices_transpuestas(m1, m2)
+            self.result_label.text = f"Resultado: {result}"
+        except Exception as e:
+            self.result_label.text = f"Error: {e}"
 
-if __name__ == "__main__":
-    app = App()
-    app.mainloop()
+    def calculate_producto_punto(self, instance):
+        try:
+            data = eval(self.input_field.text)
+            v1, v2 = data
+            result = producto_punto(v1, v2)
+            self.result_label.text = f"Resultado: {result}"
+        except Exception as e:
+            self.result_label.text = f"Error: {e}"
+
+    def calculate_producto_matriz_vector(self, instance):
+        try:
+            data = eval(self.input_field.text)
+            matriz, vector = data
+            result = producto_matriz_vector(matriz, vector)
+            self.result_label.text = f"Resultado: {result}"
+        except Exception as e:
+            self.result_label.text = f"Error: {e}"
+
+if __name__ == '__main__':
+    AlgebraLinealApp().run()
