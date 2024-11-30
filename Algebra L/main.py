@@ -6,7 +6,7 @@ from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 
 # Importar funciones de cada archivo
-from funciiones.EspaciosVectoriales1 import *
+from funciiones.EspaciosVectoriales1 import suma_vectores, resta_vectores, escalar_por_vector, producto_punto
 from funciiones.MatricesTranspuestas import transponer_matriz
 from funciiones.DeterminanteXCofactor import determinante_por_cofactor
 from funciiones.MatrizCramer import resolver_sistema_cramer
@@ -55,19 +55,22 @@ class EspaciosVectorialesScreen(Screen):
         layout = BoxLayout(orientation='vertical', padding=20)
         layout.add_widget(Label(text="Espacios Vectoriales", font_size=18))
 
-        # Ejemplo de ingreso y ejecución de operaciones (modificable según necesidad)
+        # Entrada de vectores
         self.vector1_input = TextInput(hint_text="Ingrese el primer vector (separado por comas)", multiline=False)
         self.vector2_input = TextInput(hint_text="Ingrese el segundo vector (separado por comas)", multiline=False)
         layout.add_widget(self.vector1_input)
         layout.add_widget(self.vector2_input)
 
-        ejecutar_btn = Button(text="Calcular Suma")
+        # Botón de cálculo
+        ejecutar_btn = Button(text="Calcular Suma de Vectores")
         ejecutar_btn.bind(on_press=self.calcular_suma)
         layout.add_widget(ejecutar_btn)
 
+        # Etiqueta de resultado
         self.resultado_label = Label(text="Resultado:", size_hint=(1, 0.2))
         layout.add_widget(self.resultado_label)
 
+        # Botón de regreso al menú principal
         volver_btn = Button(text="Volver al Menú Principal")
         volver_btn.bind(on_press=self.volver_inicio)
         layout.add_widget(volver_btn)
@@ -86,14 +89,94 @@ class EspaciosVectorialesScreen(Screen):
     def volver_inicio(self, instance):
         self.manager.current = "inicio"
 
-# Repetir estructura para otras pantallas...
 
+class MatricesTranspuestasScreen(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        layout = BoxLayout(orientation='vertical', padding=20)
+        layout.add_widget(Label(text="Matriz Transpuesta", font_size=18))
+
+        # Entrada de matriz
+        self.matriz_input = TextInput(hint_text="Ingrese la matriz (filas separadas por ; y columnas por ,)", multiline=True)
+        layout.add_widget(self.matriz_input)
+
+        # Botón de cálculo
+        ejecutar_btn = Button(text="Calcular Transpuesta")
+        ejecutar_btn.bind(on_press=self.calcular_transpuesta)
+        layout.add_widget(ejecutar_btn)
+
+        # Etiqueta de resultado
+        self.resultado_label = Label(text="Resultado:", size_hint=(1, 0.2))
+        layout.add_widget(self.resultado_label)
+
+        # Botón de regreso al menú principal
+        volver_btn = Button(text="Volver al Menú Principal")
+        volver_btn.bind(on_press=self.volver_inicio)
+        layout.add_widget(volver_btn)
+
+        self.add_widget(layout)
+
+    def calcular_transpuesta(self, instance):
+        try:
+            matriz = [list(map(float, fila.split(","))) for fila in self.matriz_input.text.split(";")]
+            resultado = transponer_matriz(matriz)
+            self.resultado_label.text = f"Resultado: {resultado}"
+        except Exception as e:
+            self.resultado_label.text = f"Error: {str(e)}"
+
+    def volver_inicio(self, instance):
+        self.manager.current = "inicio"
+
+
+# Repetir la estructura para cada pantalla
+class DeterminanteCofactorScreen(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        layout = BoxLayout(orientation='vertical', padding=20)
+        layout.add_widget(Label(text="Determinante por Cofactor", font_size=18))
+
+        # Entrada de matriz
+        self.matriz_input = TextInput(hint_text="Ingrese la matriz (filas separadas por ; y columnas por ,)", multiline=True)
+        layout.add_widget(self.matriz_input)
+
+        # Botón de cálculo
+        ejecutar_btn = Button(text="Calcular Determinante")
+        ejecutar_btn.bind(on_press=self.calcular_determinante)
+        layout.add_widget(ejecutar_btn)
+
+        # Etiqueta de resultado
+        self.resultado_label = Label(text="Resultado:", size_hint=(1, 0.2))
+        layout.add_widget(self.resultado_label)
+
+        # Botón de regreso al menú principal
+        volver_btn = Button(text="Volver al Menú Principal")
+        volver_btn.bind(on_press=self.volver_inicio)
+        layout.add_widget(volver_btn)
+
+        self.add_widget(layout)
+
+    def calcular_determinante(self, instance):
+        try:
+            matriz = [list(map(float, fila.split(","))) for fila in self.matriz_input.text.split(";")]
+            resultado = determinante_por_cofactor(matriz)
+            self.resultado_label.text = f"Resultado: {resultado}"
+        except Exception as e:
+            self.resultado_label.text = f"Error: {str(e)}"
+
+    def volver_inicio(self, instance):
+        self.manager.current = "inicio"
+
+
+# Agregar pantallas para el resto de las operaciones...
+# Como en el ejemplo, puedes replicar las pantallas anteriores para el resto de las operaciones.
 
 class CalculadoraApp(App):
     def build(self):
         sm = ScreenManager()
         sm.add_widget(InicioScreen(name="inicio"))
         sm.add_widget(EspaciosVectorialesScreen(name="espacios_vectoriales"))
+        sm.add_widget(MatricesTranspuestasScreen(name="matrices_transpuestas"))
+        sm.add_widget(DeterminanteCofactorScreen(name="determinante_cofactor"))
         # Agregar más pantallas para cada funcionalidad
         return sm
 
