@@ -12,3 +12,9 @@ def combinar_vectores(v1, v2, escalar_1=1, escalar_2=1):
     v1_escalado = escalar_por_vector(escalar_1, v1)
     v2_escalado = escalar_por_vector(escalar_2, v2)
     return suma_vectores(v1_escalado, v2_escalado)
+
+def producto_escalar(v1, v2):
+    if len(v1) != len(v2):
+        raise ValueError("Los vectores deben tener la misma longitud")
+    return sum(a * b for a, b in zip(v1, v2))
+

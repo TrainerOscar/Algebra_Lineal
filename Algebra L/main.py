@@ -1,11 +1,11 @@
 from kivy.app import App
-from kivy.uix.screenmanager import ScreenManager, Screen
-from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.label import Label
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.uix.scrollview import ScrollView
+from kivy.uix.gridlayout import GridLayout
 from kivy.uix.textinput import TextInput
-
-# Importar funciones de cada archivo
 from funciiones.EspaciosVectoriales1 import suma_vectores, resta_vectores, escalar_por_vector, producto_punto
 from funciiones.MatricesTranspuestas import transponer_matriz
 from funciiones.DeterminanteXCofactor import determinante_por_cofactor
@@ -13,173 +13,188 @@ from funciiones.MatrizCramer import resolver_sistema_cramer
 from funciiones.MatrizEscalonadayGJ import escalonar_matriz
 from funciiones.MatrizInversa import matriz_inversa
 from funciiones.MultiplicacionMatrices import multiplicar_matrices
-from funciiones.MatricesTranspuestas import transponer_matriz
-from funciiones.OperacionesVectores import combinar_vectores
+from funciiones.OperacionesVectores import combinar_vectores, producto_escalar
 from funciiones.ProductoMatrizVector import producto_matriz_vector
+from funciiones.MultiplicacionTranspuestas import multiplicar_matrices_transpuestas
 
-
-class InicioScreen(Screen):
+# Pantalla de bienvenida
+class BienvenidaScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        layout = BoxLayout(orientation='vertical', spacing=10, padding=20)
-        layout.add_widget(Label(text="Calculadora de Álgebra Lineal", font_size=24, size_hint=(1, 0.2)))
+        layout = BoxLayout(orientation='vertical', spacing=10)
+        label = Label(text="Bienvenido al Programa de Álgebra Lineal", font_size=24, size_hint=(1, 0.2))
+        button = Button(text="Comenzar", size_hint=(None, None), size=(200, 50))
+        button.bind(on_press=self.go_to_functions)
+        layout.add_widget(label)
+        layout.add_widget(button)
+        self.add_widget(layout)
 
-        # Botones para cada función
-        funciones = [
-            ("Espacios Vectoriales", "espacios_vectoriales"),
-            ("Matriz Transpuesta", "matrices_transpuestas"),
-            ("Determinante por Cofactor", "determinante_cofactor"),
-            ("Método de Cramer", "metodo_cramer"),
-            ("Matriz Escalonada", "matriz_escalonada"),
-            ("Matriz Inversa", "matriz_inversa"),
-            ("Multiplicación de Matrices", "multiplicacion_matrices"),
-            ("Multiplicación de Matrices Transpuestas", "multiplicacion_matrices_transpuestas"),
-            ("Operaciones con Vectores", "operaciones_vectores"),
-            ("Producto Matriz-Vector", "producto_matriz_vector")
-        ]
+    def go_to_functions(self, instance):
+        self.manager.current = 'funciones'
 
-        for texto, pantalla in funciones:
-            btn = Button(text=texto, size_hint=(1, 0.1))
-            btn.bind(on_press=lambda instance, scr=pantalla: self.cambiar_pantalla(scr))
-            layout.add_widget(btn)
+
+# Pantalla con las funciones de álgebra lineal
+class FuncionesScreen(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        layout = BoxLayout(orientation='vertical', spacing=20)
+        
+        # Título
+        label = Label(text="Selecciona una Función", font_size=24, size_hint=(1, 0.1))
+        layout.add_widget(label)
+        
+        # Crear un layout para los botones
+        button_layout = GridLayout(cols=2, padding=10, spacing=10, size_hint=(1, None), height=400)
+        button_layout.add_widget(self.create_button("Suma de Vectores", 'suma_vectores'))
+        button_layout.add_widget(self.create_button("Resta de Vectores", 'resta_vectores'))
+        button_layout.add_widget(self.create_button("Escalar por Vector", 'escalar_por_vector'))
+        button_layout.add_widget(self.create_button("Producto Punto", 'producto_punto'))
+        button_layout.add_widget(self.create_button("Transponer Matriz", 'transponer_matriz'))
+        button_layout.add_widget(self.create_button("Determinante por Cofactor", 'determinante_por_cofactor'))
+        button_layout.add_widget(self.create_button("Método de Cramer", 'resolver_sistema_cramer'))
+        button_layout.add_widget(self.create_button("Matriz Escalonada", 'escalonar_matriz'))
+        button_layout.add_widget(self.create_button("Matriz Inversa", 'matriz_inversa'))
+        button_layout.add_widget(self.create_button("Multiplicación de Matrices", 'multiplicar_matrices'))
+        button_layout.add_widget(self.create_button("Multiplicación Matrices Transpuestas", 'multiplicar_matrices_transpuestas'))
+        button_layout.add_widget(self.create_button("Operaciones con Vectores", 'operaciones_vectores'))
+        button_layout.add_widget(self.create_button("Producto Matriz - Vector", 'producto_matriz_vector'))
+
+        # Agregar los botones al scrollview
+        scroll_view = ScrollView()
+        scroll_view.add_widget(button_layout)
+
+        # Agregar el scrollview a la pantalla
+        layout.add_widget(scroll_view)
+        self.add_widget(layout)
+
+    def create_button(self, text, screen_name):
+        button = Button(text=text, size_hint=(None, None), size=(200, 50))
+        button.bind(on_press=lambda x: self.change_screen(screen_name))
+        return button
+
+    def change_screen(self, screen_name):
+        self.manager.current = screen_name
+
+
+# Pantalla para cada función
+class BaseFunctionScreen(Screen):
+    def __init__(self, title, input_fields, calculate_callback, **kwargs):
+        super().__init__(**kwargs)
+        self.title = title
+        self.input_fields = input_fields
+        self.calculate_callback = calculate_callback
+        self.result_label = Label(text="Resultado: ", font_size=18)
+        self.create_ui()
+
+    def create_ui(self):
+        layout = BoxLayout(orientation='vertical', spacing=10)
+        label = Label(text=self.title, font_size=24)
+        layout.add_widget(label)
+
+        # Crear inputs
+        for field in self.input_fields:
+            layout.add_widget(field)
+        
+        button = Button(text="Calcular", size_hint=(None, None), size=(200, 50))
+        button.bind(on_press=self.calculate)
+        layout.add_widget(button)
+
+        # Resultado
+        layout.add_widget(self.result_label)
+
+        # Botón Volver al Menú
+        back_button = Button(text="Volver al Menú", size_hint=(None, None), size=(200, 50))
+        back_button.bind(on_press=self.go_back)
+        layout.add_widget(back_button)
 
         self.add_widget(layout)
 
-    def cambiar_pantalla(self, pantalla):
-        self.manager.current = pantalla
+    def calculate(self, instance):
+        inputs = [field.text for field in self.input_fields]
+        result = self.calculate_callback(*inputs)
+        self.result_label.text = f"Resultado: {result}"
+
+    def go_back(self, instance):
+        self.manager.current = 'funciones'
 
 
-class EspaciosVectorialesScreen(Screen):
+# Funciones
+def suma_vectores_handler(v1, v2):
+    vector1 = list(map(int, v1.split(',')))
+    vector2 = list(map(int, v2.split(',')))
+    return suma_vectores(vector1, vector2)
+
+def resta_vectores_handler(v1, v2):
+    vector1 = list(map(int, v1.split(',')))
+    vector2 = list(map(int, v2.split(',')))
+    return resta_vectores(vector1, vector2)
+
+def escalar_por_vector_handler(v, scalar):
+    vector = list(map(int, v.split(',')))
+    scalar = int(scalar)
+    return escalar_por_vector(scalar, vector)
+
+def producto_punto_handler(v1, v2):
+    vector1 = list(map(int, v1.split(',')))
+    vector2 = list(map(int, v2.split(',')))
+    return producto_punto(vector1, vector2)
+
+
+# Pantallas específicas
+class SumaVectoresScreen(BaseFunctionScreen):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        layout = BoxLayout(orientation='vertical', padding=20)
-        layout.add_widget(Label(text="Espacios Vectoriales", font_size=18))
+        super().__init__(
+            title="Suma de Vectores",
+            input_fields=[TextInput(hint_text="Ingresa el primer vector (ej: 1,2,3)", multiline=False, size_hint=(1, 0.1)),
+                          TextInput(hint_text="Ingresa el segundo vector (ej: 4,5,6)", multiline=False, size_hint=(1, 0.1))],
+            calculate_callback=suma_vectores_handler,
+            **kwargs
+        )
 
-        # Entrada de vectores
-        self.vector1_input = TextInput(hint_text="Ingrese el primer vector (separado por comas)", multiline=False)
-        self.vector2_input = TextInput(hint_text="Ingrese el segundo vector (separado por comas)", multiline=False)
-        layout.add_widget(self.vector1_input)
-        layout.add_widget(self.vector2_input)
-
-        # Botón de cálculo
-        ejecutar_btn = Button(text="Calcular Suma de Vectores")
-        ejecutar_btn.bind(on_press=self.calcular_suma)
-        layout.add_widget(ejecutar_btn)
-
-        # Etiqueta de resultado
-        self.resultado_label = Label(text="Resultado:", size_hint=(1, 0.2))
-        layout.add_widget(self.resultado_label)
-
-        # Botón de regreso al menú principal
-        volver_btn = Button(text="Volver al Menú Principal")
-        volver_btn.bind(on_press=self.volver_inicio)
-        layout.add_widget(volver_btn)
-
-        self.add_widget(layout)
-
-    def calcular_suma(self, instance):
-        try:
-            v1 = list(map(float, self.vector1_input.text.split(",")))
-            v2 = list(map(float, self.vector2_input.text.split(",")))
-            resultado = suma_vectores(v1, v2)
-            self.resultado_label.text = f"Resultado: {resultado}"
-        except Exception as e:
-            self.resultado_label.text = f"Error: {str(e)}"
-
-    def volver_inicio(self, instance):
-        self.manager.current = "inicio"
-
-
-class MatricesTranspuestasScreen(Screen):
+class RestaVectoresScreen(BaseFunctionScreen):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        layout = BoxLayout(orientation='vertical', padding=20)
-        layout.add_widget(Label(text="Matriz Transpuesta", font_size=18))
+        super().__init__(
+            title="Resta de Vectores",
+            input_fields=[TextInput(hint_text="Ingresa el primer vector", multiline=False, size_hint=(1, 0.1)),
+                          TextInput(hint_text="Ingresa el segundo vector", multiline=False, size_hint=(1, 0.1))],
+            calculate_callback=resta_vectores_handler,
+            **kwargs
+        )
 
-        # Entrada de matriz
-        self.matriz_input = TextInput(hint_text="Ingrese la matriz (filas separadas por ; y columnas por ,)", multiline=True)
-        layout.add_widget(self.matriz_input)
-
-        # Botón de cálculo
-        ejecutar_btn = Button(text="Calcular Transpuesta")
-        ejecutar_btn.bind(on_press=self.calcular_transpuesta)
-        layout.add_widget(ejecutar_btn)
-
-        # Etiqueta de resultado
-        self.resultado_label = Label(text="Resultado:", size_hint=(1, 0.2))
-        layout.add_widget(self.resultado_label)
-
-        # Botón de regreso al menú principal
-        volver_btn = Button(text="Volver al Menú Principal")
-        volver_btn.bind(on_press=self.volver_inicio)
-        layout.add_widget(volver_btn)
-
-        self.add_widget(layout)
-
-    def calcular_transpuesta(self, instance):
-        try:
-            matriz = [list(map(float, fila.split(","))) for fila in self.matriz_input.text.split(";")]
-            resultado = transponer_matriz(matriz)
-            self.resultado_label.text = f"Resultado: {resultado}"
-        except Exception as e:
-            self.resultado_label.text = f"Error: {str(e)}"
-
-    def volver_inicio(self, instance):
-        self.manager.current = "inicio"
-
-
-# Repetir la estructura para cada pantalla
-class DeterminanteCofactorScreen(Screen):
+class EscalarPorVectorScreen(BaseFunctionScreen):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        layout = BoxLayout(orientation='vertical', padding=20)
-        layout.add_widget(Label(text="Determinante por Cofactor", font_size=18))
+        super().__init__(
+            title="Escalar por Vector",
+            input_fields=[TextInput(hint_text="Ingresa el vector (ej: 1,2,3)", multiline=False, size_hint=(1, 0.1)),
+                          TextInput(hint_text="Ingresa el valor escalar", multiline=False, size_hint=(1, 0.1))],
+            calculate_callback=escalar_por_vector_handler,
+            **kwargs
+        )
 
-        # Entrada de matriz
-        self.matriz_input = TextInput(hint_text="Ingrese la matriz (filas separadas por ; y columnas por ,)", multiline=True)
-        layout.add_widget(self.matriz_input)
-
-        # Botón de cálculo
-        ejecutar_btn = Button(text="Calcular Determinante")
-        ejecutar_btn.bind(on_press=self.calcular_determinante)
-        layout.add_widget(ejecutar_btn)
-
-        # Etiqueta de resultado
-        self.resultado_label = Label(text="Resultado:", size_hint=(1, 0.2))
-        layout.add_widget(self.resultado_label)
-
-        # Botón de regreso al menú principal
-        volver_btn = Button(text="Volver al Menú Principal")
-        volver_btn.bind(on_press=self.volver_inicio)
-        layout.add_widget(volver_btn)
-
-        self.add_widget(layout)
-
-    def calcular_determinante(self, instance):
-        try:
-            matriz = [list(map(float, fila.split(","))) for fila in self.matriz_input.text.split(";")]
-            resultado = determinante_por_cofactor(matriz)
-            self.resultado_label.text = f"Resultado: {resultado}"
-        except Exception as e:
-            self.resultado_label.text = f"Error: {str(e)}"
-
-    def volver_inicio(self, instance):
-        self.manager.current = "inicio"
+class ProductoPuntoScreen(BaseFunctionScreen):
+    def __init__(self, **kwargs):
+        super().__init__(
+            title="Producto Punto",
+            input_fields=[TextInput(hint_text="Ingresa el primer vector", multiline=False, size_hint=(1, 0.1)),
+                          TextInput(hint_text="Ingresa el segundo vector", multiline=False, size_hint=(1, 0.1))],
+            calculate_callback=producto_punto_handler,
+            **kwargs
+        )
 
 
-# Agregar pantallas para el resto de las operaciones...
-# Como en el ejemplo, puedes replicar las pantallas anteriores para el resto de las operaciones.
-
-class CalculadoraApp(App):
+# Pantalla principal de la app
+class AlgebraLinealApp(App):
     def build(self):
         sm = ScreenManager()
-        sm.add_widget(InicioScreen(name="inicio"))
-        sm.add_widget(EspaciosVectorialesScreen(name="espacios_vectoriales"))
-        sm.add_widget(MatricesTranspuestasScreen(name="matrices_transpuestas"))
-        sm.add_widget(DeterminanteCofactorScreen(name="determinante_cofactor"))
-        # Agregar más pantallas para cada funcionalidad
+        sm.add_widget(BienvenidaScreen(name="bienvenida"))
+        sm.add_widget(FuncionesScreen(name="funciones"))
+        sm.add_widget(SumaVectoresScreen(name="suma_vectores"))
+        sm.add_widget(RestaVectoresScreen(name="resta_vectores"))
+        sm.add_widget(EscalarPorVectorScreen(name="escalar_por_vector"))
+        sm.add_widget(ProductoPuntoScreen(name="producto_punto"))
+        # Añadir las demás pantallas aquí
         return sm
 
 
 if __name__ == "__main__":
-    CalculadoraApp().run()
+    AlgebraLinealApp().run()
