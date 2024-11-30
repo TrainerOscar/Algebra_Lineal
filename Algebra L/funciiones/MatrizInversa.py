@@ -1,2 +1,30 @@
-def invertir_matriz(matriz):
-    pass  # Completar con el método de adjuntos o Gauss-Jordan según prefieras.
+def matriz_inversa(matriz):
+    """
+    Calcula la matriz inversa de una matriz cuadrada.
+    :param matriz: Lista de listas representando la matriz cuadrada.
+    :return: Lista de listas con la matriz inversa o error si no es invertible.
+    """
+    n = len(matriz)
+    if n != len(matriz[0]):
+        raise ValueError("La matriz debe ser cuadrada para calcular la inversa.")
+
+    # Construye la matriz identidad
+    identidad = [[1 if i == j else 0 for j in range(n)] for i in range(n)]
+
+    # Combina la matriz y la identidad
+    for i in range(n):
+        pivote = matriz[i][i]
+        if pivote == 0:
+            raise ValueError("La matriz no es invertible.")
+        # Normaliza la fila del pivote
+        matriz[i] = [x / pivote for x in matriz[i]]
+        identidad[i] = [x / pivote for x in identidad[i]]
+
+        # Elimina los valores en las demás filas
+        for j in range(n):
+            if i != j:
+                factor = matriz[j][i]
+                matriz[j] = [xj - factor * xi for xj, xi in zip(matriz[j], matriz[i])]
+                identidad[j] = [yj - factor * yi for yj, yi in zip(identidad[j], identidad[i])]
+
+    return identidad
