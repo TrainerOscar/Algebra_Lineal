@@ -4,7 +4,14 @@ from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
-from funciiones.EspaciosVectoriales1 import suma_vectores
+from funciiones.EspaciosVectoriales1 import (
+    suma_vectores,
+    resta_vectores,
+    escalar_por_vector,
+    norma_vector,
+    producto_punto
+)
+
 from funciiones.MatricesTranspuestas import transponer_matriz
 from funciiones.DeterminanteXCofactor import determinante_por_cofactor
 from funciiones.MatrizCramer import resolver_sistema_cramer
@@ -53,19 +60,40 @@ class EspaciosVectorialesScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         layout = BoxLayout(orientation='vertical')
-        layout.add_widget(Label(text="Espacios Vectoriales", font_size=24))
+        layout.add_widget(Label(text="Operaciones en Espacios Vectoriales", font_size=24))
 
-        self.vector1_input = TextInput(hint_text="Ingrese el primer vector (ej: 1,2,3)", multiline=False, size_hint=(1, 0.1))
-        self.vector2_input = TextInput(hint_text="Ingrese el segundo vector (ej: 4,5,6)", multiline=False, size_hint=(1, 0.1))
-        
-        boton_suma = Button(text="Suma de Vectores", size_hint=(1, 0.1))
-        boton_suma.bind(on_press=self.sumar_vectores)
-
-        layout.add_widget(self.vector1_input)
-        layout.add_widget(self.vector2_input)
-        layout.add_widget(boton_suma)
-
+        # Suma de Vectores
+        self.v1_input = TextInput(hint_text="Ingrese el primer vector (ej: [1, 2, 3])", multiline=False, size_hint=(1, 0.1))
+        self.v2_input = TextInput(hint_text="Ingrese el segundo vector (ej: [4, 5, 6])", multiline=False, size_hint=(1, 0.1))
         self.resultado_label = Label(text="", font_size=20)
+
+        boton_suma = Button(text="Sumar Vectores", size_hint=(1, 0.1))
+        boton_suma.bind(on_press=self.calcular_suma)
+
+        boton_resta = Button(text="Restar Vectores", size_hint=(1, 0.1))
+        boton_resta.bind(on_press=self.calcular_resta)
+
+        # Escalar por vector
+        self.escalar_input = TextInput(hint_text="Ingrese un escalar (ej: 2)", multiline=False, size_hint=(1, 0.1))
+        boton_escalar = Button(text="Escalar Vector", size_hint=(1, 0.1))
+        boton_escalar.bind(on_press=self.calcular_escalar)
+
+        # Norma del vector
+        boton_norma = Button(text="Calcular Norma", size_hint=(1, 0.1))
+        boton_norma.bind(on_press=self.calcular_norma)
+
+        # Producto punto
+        boton_producto = Button(text="Producto Punto", size_hint=(1, 0.1))
+        boton_producto.bind(on_press=self.calcular_producto)
+
+        layout.add_widget(self.v1_input)
+        layout.add_widget(self.v2_input)
+        layout.add_widget(boton_suma)
+        layout.add_widget(boton_resta)
+        layout.add_widget(boton_escalar)
+        layout.add_widget(self.escalar_input)
+        layout.add_widget(boton_norma)
+        layout.add_widget(boton_producto)
         layout.add_widget(self.resultado_label)
 
         # Botón para regresar al menú
@@ -75,15 +103,49 @@ class EspaciosVectorialesScreen(Screen):
 
         self.add_widget(layout)
 
-    def sumar_vectores(self, instance):
+    def calcular_suma(self, instance):
+        v1 = eval(self.v1_input.text)  # Asegúrate de validar y manejar excepciones
+        v2 = eval(self.v2_input.text)
         try:
-            vector1 = list(map(float, self.vector1_input.text.split(",")))
-            vector2 = list(map(float, self.vector2_input.text.split(",")))
-            resultado = suma_vectores(vector1, vector2)
-            self.resultado_label.text = f"Resultado: {resultado}"
-        except ValueError:
-            self.resultado_label.text = "Error: Ingrese vectores válidos."
+            resultado = suma_vectores(v1, v2)
+            self.resultado_label.text = f"Suma: {resultado}"
+        except Exception as e:
+            self.resultado_label.text = str(e)
 
+    def calcular_resta(self, instance):
+        v1 = eval(self.v1_input.text)
+        v2 = eval(self.v2_input.text)
+        try:
+            resultado = resta_vectores(v1, v2)
+            self.resultado_label.text = f"Resta: {resultado}"
+        except Exception as e:
+            self.resultado_label.text = str(e)
+
+    def calcular_escalar(self, instance):
+        escalar = float(self.escalar_input.text)
+        v1 = eval(self.v1_input.text)
+        try:
+            resultado = escalar_por_vector(escalar, v1)
+            self.resultado_label.text = f"Vector escalado: {resultado}"
+        except Exception as e:
+            self.resultado_label.text = str(e)
+
+    def calcular_norma(self, instance):
+        v1 = eval(self.v1_input.text)
+        try:
+            resultado = norma_vector(v1)
+            self.resultado_label.text = f"Norma: {resultado}"
+        except Exception as e:
+            self.resultado_label.text = str(e)
+
+    def calcular_producto(self, instance):
+        v1 = eval(self.v1_input.text)
+        v2 = eval(self.v2_input.text)
+        try:
+            resultado = producto_punto(v1, v2)
+            self.resultado_label.text = f"Producto Punto: {resultado}"
+        except Exception as e:
+            self.resultado_label.text = str(e)
 class MatrizTranspuestaScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
