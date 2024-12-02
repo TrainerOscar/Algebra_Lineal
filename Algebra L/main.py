@@ -1,49 +1,33 @@
 from kivy.app import App
-from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.screenmanager import Screen, ScreenManager
 from kivy.uix.button import Button
+from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
-from kivy.uix.screenmanager import Screen, ScreenManager
-
-# Importar las funciones de los archivos correspondientes
-from funciiones.EspaciosVectoriales1 import suma_vectores, resta_vectores, escalar_por_vector, producto_punto
+from funciiones.EspaciosVectoriales1 import suma_vectores
 from funciiones.MatricesTranspuestas import transponer_matriz
 from funciiones.DeterminanteXCofactor import determinante_por_cofactor
 from funciiones.MatrizCramer import resolver_sistema_cramer
 from funciiones.MatrizEscalonadayGJ import escalonar_matriz
 from funciiones.MatrizInversa import matriz_inversa
 from funciiones.MultiplicacionMatrices import multiplicar_matrices
-from funciiones.MatricesTranspuestas import transponer_matriz
-from funciiones.OperacionesVectores import combinar_vectores, producto_escalar
-from funciiones.ProductoMatrizVector import producto_matriz_vector
 from funciiones.MultiplicacionTranspuestas import multiplicar_matrices_transpuestas
+from funciiones.OperacionesVectores import combinar_vectores
+from funciiones.ProductoMatrizVector import producto_matriz_vector
+from funciiones.MetodoBiseccion import biseccion
+from funciiones.NewtonRaphson import newton_raphson
+from funciiones.FalsaPSecante import falsa_posicion, secante
 
-
-# Pantalla de bienvenida
-class BienvenidaScreen(Screen):
+# Pantalla principal con el menú
+class MenuPrincipal(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        layout = BoxLayout(orientation='vertical', spacing=10, padding=20)
-        label = Label(text="Bienvenido a la Calculadora de Álgebra Lineal", font_size=24, size_hint=(1, 0.3))
-        boton = Button(text="Iniciar", size_hint=(1, 0.2), on_press=self.ir_a_funciones)
-        layout.add_widget(label)
-        layout.add_widget(boton)
-        self.add_widget(layout)
-
-    def ir_a_funciones(self, instance):
-        self.manager.current = "funciones"
-
-
-# Pantalla principal con todas las funciones
-class FuncionesScreen(Screen):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        layout = BoxLayout(orientation='vertical', spacing=10, padding=20)
-        label = Label(text="Selecciona una operación:", font_size=20, size_hint=(1, 0.2))
-        layout.add_widget(label)
+        layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
+        layout.add_widget(Label(text="Bienvenido a la Calculadora de Álgebra Lineal", font_size=24, size_hint=(1, 0.2)))
 
         botones = [
-            ("Transponer Matriz", "transponer_matriz"),
+            ("Espacios Vectoriales", "espacios_vectoriales"),
+            ("Matriz Transpuesta", "matriz_transpuesta"),
             ("Determinante por Cofactor", "determinante_cofactor"),
             ("Método de Cramer", "metodo_cramer"),
             ("Matriz Escalonada", "matriz_escalonada"),
@@ -52,79 +36,413 @@ class FuncionesScreen(Screen):
             ("Multiplicación de Matrices Transpuestas", "multiplicacion_matrices_transpuestas"),
             ("Operaciones con Vectores", "operaciones_vectores"),
             ("Producto Matriz-Vector", "producto_matriz_vector"),
+            ("Método de Bisección", "metodo_biseccion"),
+            ("Newton-Raphson", "newton_raphson"),
+            ("Falsa Posición y Secante", "falsa_posicion_secante"),
         ]
 
-        for texto, pantalla in botones:
-            boton = Button(text=texto, size_hint=(1, 0.2), on_press=lambda _, p=pantalla: self.cambiar_pantalla(p))
+        for texto, nombre_pantalla in botones:
+            boton = Button(text=texto, size_hint=(1, 0.1))
+            boton.bind(on_press=lambda instance, pantalla=nombre_pantalla: setattr(self.manager, 'current', pantalla))
             layout.add_widget(boton)
 
-        boton_volver = Button(text="Volver a la Bienvenida", size_hint=(1, 0.2), on_press=self.volver_bienvenida)
-        layout.add_widget(boton_volver)
-
         self.add_widget(layout)
 
-    def cambiar_pantalla(self, pantalla):
-        self.manager.current = pantalla
-
-    def volver_bienvenida(self, instance):
-        self.manager.current = "bienvenida"
-
-
-# Clase genérica para crear pantallas funcionales
-class FuncionScreen(Screen):
-    def __init__(self, nombre_funcion, funcion, **kwargs):
+# Implementación de las pantallas
+class EspaciosVectorialesScreen(Screen):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.funcion = funcion
-        layout = BoxLayout(orientation='vertical', spacing=10, padding=20)
-        label = Label(text=nombre_funcion, font_size=20, size_hint=(1, 0.2))
-        self.entrada = TextInput(hint_text="Introduce los datos necesarios", size_hint=(1, 0.2))
-        boton = Button(text="Calcular", size_hint=(1, 0.2), on_press=self.calcular)
-        self.resultado = Label(text="", font_size=18, size_hint=(1, 0.4))
-        boton_volver = Button(text="Volver al Menú", size_hint=(1, 0.2), on_press=self.volver_menu)
+        layout = BoxLayout(orientation='vertical')
+        layout.add_widget(Label(text="Espacios Vectoriales", font_size=24))
 
-        layout.add_widget(label)
-        layout.add_widget(self.entrada)
-        layout.add_widget(boton)
-        layout.add_widget(self.resultado)
-        layout.add_widget(boton_volver)
+        self.vector1_input = TextInput(hint_text="Ingrese el primer vector (ej: 1,2,3)", multiline=False, size_hint=(1, 0.1))
+        self.vector2_input = TextInput(hint_text="Ingrese el segundo vector (ej: 4,5,6)", multiline=False, size_hint=(1, 0.1))
+        
+        boton_suma = Button(text="Suma de Vectores", size_hint=(1, 0.1))
+        boton_suma.bind(on_press=self.sumar_vectores)
+
+        layout.add_widget(self.vector1_input)
+        layout.add_widget(self.vector2_input)
+        layout.add_widget(boton_suma)
+
+        self.resultado_label = Label(text="", font_size=20)
+        layout.add_widget(self.resultado_label)
+
+        # Botón para regresar al menú
+        boton_regresar = Button(text="Regresar al Menú", size_hint=(1, 0.1))
+        boton_regresar.bind(on_press=lambda instance: setattr(self.manager, 'current', 'menu_principal'))
+        layout.add_widget(boton_regresar)
+
         self.add_widget(layout)
 
-    def calcular(self, instance):
+    def sumar_vectores(self, instance):
         try:
-            datos = eval(self.entrada.text)
-            resultado = self.funcion(*datos) if isinstance(datos, tuple) else self.funcion(datos)
-            self.resultado.text = f"Resultado: {resultado}"
-        except Exception as e:
-            self.resultado.text = f"Error: {e}"
+            vector1 = list(map(float, self.vector1_input.text.split(",")))
+            vector2 = list(map(float, self.vector2_input.text.split(",")))
+            resultado = suma_vectores(vector1, vector2)
+            self.resultado_label.text = f"Resultado: {resultado}"
+        except ValueError:
+            self.resultado_label.text = "Error: Ingrese vectores válidos."
 
-    def volver_menu(self, instance):
-        self.manager.current = "funciones"
+class MatrizTranspuestaScreen(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        layout = BoxLayout(orientation='vertical')
+        layout.add_widget(Label(text="Matriz Transpuesta", font_size=24))
 
+        self.matriz_input = TextInput(hint_text="Ingrese la matriz (ej: 1,2,3;4,5,6)", multiline=False, size_hint=(1, 0.1))
+        
+        boton_transponer = Button(text="Transponer Matriz", size_hint=(1, 0.1))
+        boton_transponer.bind(on_press=self.transponer_matriz)
 
-# Aplicación principal
+        layout.add_widget(self.matriz_input)
+        layout.add_widget(boton_transponer)
+
+        self.resultado_label = Label(text="", font_size=20)
+        layout.add_widget(self.resultado_label)
+
+        # Botón para regresar al menú
+        boton_regresar = Button(text="Regresar al Menú", size_hint=(1, 0.1))
+        boton_regresar.bind(on_press=lambda instance: setattr(self.manager, 'current', 'menu_principal'))
+        layout.add_widget(boton_regresar)
+
+        self.add_widget(layout)
+
+    def transponer_matriz(self, instance):
+        try:
+            matriz = [list(map(float, fila.split(","))) for fila in self.matriz_input.text.split(";")]
+            resultado = transponer_matriz(matriz)
+            self.resultado_label.text = f"Resultado: {resultado}"
+        except ValueError:
+            self.resultado_label.text = "Error: Ingrese una matriz válida."
+
+class DeterminanteCofactorScreen(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        layout = BoxLayout(orientation='vertical')
+        layout.add_widget(Label(text="Determinante por Cofactor", font_size=24))
+
+        self.matriz_input = TextInput(hint_text="Ingrese la matriz (ej: 1,2,3;4,5,6)", multiline=False, size_hint=(1, 0.1))
+        
+        boton_calcular = Button(text="Calcular Determinante", size_hint=(1, 0.1))
+        boton_calcular.bind(on_press=self.calcular_determinante)
+
+        layout.add_widget(self.matriz_input)
+        layout.add_widget(boton_calcular)
+
+        self.resultado_label = Label(text="", font_size=20)
+        layout.add_widget(self.resultado_label)
+
+        # Botón para regresar al menú
+        boton_regresar = Button(text="Regresar al Menú", size_hint=(1, 0.1))
+        boton_regresar.bind(on_press=lambda instance: setattr(self.manager, 'current', 'menu_principal'))
+        layout.add_widget(boton_regresar)
+
+        self.add_widget(layout)
+
+    def calcular_determinante(self, instance):
+        try:
+            matriz = [list(map(float, fila.split(","))) for fila in self.matriz_input.text.split(";")]
+            resultado = determinante_por_cofactor(matriz)
+            self.resultado_label.text = f"Resultado: {resultado}"
+        except ValueError:
+            self.resultado_label.text = "Error: Ingrese una matriz válida."
+
+class MetodoCramerScreen(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        layout = BoxLayout(orientation='vertical')
+        layout.add_widget(Label(text="Método de Cramer", font_size=24))
+
+        self.matriz_input = TextInput(hint_text="Ingrese la matriz (ej: 1,2,3;4,5,6)", multiline=False, size_hint=(1, 0.1))
+        self.resultado_label = Label(text="", font_size=20)
+
+        boton_calcular = Button(text="Resolver con Cramer", size_hint=(1, 0.1))
+        boton_calcular.bind(on_press=self.resolver_cramer)
+
+        layout.add_widget(self.matriz_input)
+        layout.add_widget(boton_calcular)
+        layout.add_widget(self.resultado_label)
+
+        # Botón para regresar al menú
+        boton_regresar = Button(text="Regresar al Menú", size_hint=(1, 0.1))
+        boton_regresar.bind(on_press=lambda instance: setattr(self.manager, 'current', 'menu_principal'))
+        layout.add_widget(boton_regresar)
+
+        self.add_widget(layout)
+
+    def resolver_cramer(self, instance):
+        self.resultado_label.text = "Función no implementada."
+
+class MatrizEscalonadaScreen(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        layout = BoxLayout(orientation='vertical')
+        layout.add_widget(Label(text="Matriz Escalonada", font_size=24))
+
+        self.matriz_input = TextInput(hint_text="Ingrese la matriz (ej: 1,2,3;4,5,6)", multiline=False, size_hint=(1, 0.1))
+        self.resultado_label = Label(text="", font_size=20)
+
+        boton_calcular = Button(text="Escalonar Matriz", size_hint=(1, 0.1))
+        boton_calcular.bind(on_press=self.escalonar_matriz)
+
+        layout.add_widget(self.matriz_input)
+        layout.add_widget(boton_calcular)
+        layout.add_widget(self.resultado_label)
+
+        # Botón para regresar al menú
+        boton_regresar = Button(text="Regresar al Menú", size_hint=(1, 0.1))
+        boton_regresar.bind(on_press=lambda instance: setattr(self.manager, 'current', 'menu_principal'))
+        layout.add_widget(boton_regresar)
+
+        self.add_widget(layout)
+
+    def escalonar_matriz(self, instance):
+        self.resultado_label.text = "Función no implementada."
+
+class MatrizInversaScreen(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        layout = BoxLayout(orientation='vertical')
+        layout.add_widget(Label(text="Matriz Inversa", font_size=24))
+
+        self.matriz_input = TextInput(hint_text="Ingrese la matriz (ej: 1,2,3;4,5,6)", multiline=False, size_hint=(1, 0.1))
+        self.resultado_label = Label(text="", font_size=20)
+
+        boton_calcular = Button(text="Calcular Inversa", size_hint=(1, 0.1))
+        boton_calcular.bind(on_press=self.calcular_inversa)
+
+        layout.add_widget(self.matriz_input)
+        layout.add_widget(boton_calcular)
+        layout.add_widget(self.resultado_label)
+
+        # Botón para regresar al menú
+        boton_regresar = Button(text="Regresar al Menú", size_hint=(1, 0.1))
+        boton_regresar.bind(on_press=lambda instance: setattr(self.manager, 'current', 'menu_principal'))
+        layout.add_widget(boton_regresar)
+
+        self.add_widget(layout)
+
+    def calcular_inversa(self, instance):
+        self.resultado_label.text = "Función no implementada."
+
+class MultiplicacionMatricesScreen(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        layout = BoxLayout(orientation='vertical')
+        layout.add_widget(Label(text="Multiplicación de Matrices", font_size=24))
+
+        self.matriz1_input = TextInput(hint_text="Ingrese la primera matriz (ej: 1,2;3,4)", multiline=False, size_hint=(1, 0.1))
+        self.matriz2_input = TextInput(hint_text="Ingrese la segunda matriz (ej: 5,6;7,8)", multiline=False, size_hint=(1, 0.1))
+        self.resultado_label = Label(text="", font_size=20)
+
+        boton_multiplicar = Button(text="Multiplicar Matrices", size_hint=(1, 0.1))
+        boton_multiplicar.bind(on_press=self.multiplicar_matrices)
+
+        layout.add_widget(self.matriz1_input)
+        layout.add_widget(self.matriz2_input)
+        layout.add_widget(boton_multiplicar)
+        layout.add_widget(self.resultado_label)
+
+        # Botón para regresar al menú
+        boton_regresar = Button(text="Regresar al Menú", size_hint=(1, 0.1))
+        boton_regresar.bind(on_press=lambda instance: setattr(self.manager, 'current', 'menu_principal'))
+        layout.add_widget(boton_regresar)
+
+        self.add_widget(layout)
+
+    def multiplicar_matrices(self, instance):
+        self.resultado_label.text = "Función no implementada."
+
+class MultiplicacionTranspuestasScreen(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        layout = BoxLayout(orientation='vertical')
+        layout.add_widget(Label(text="Multiplicación de Matrices Transpuestas", font_size=24))
+
+        self.matriz_input = TextInput(hint_text="Ingrese la matriz (ej: 1,2;3,4)", multiline=False, size_hint=(1, 0.1))
+        self.resultado_label = Label(text="", font_size=20)
+
+        boton_multiplicar = Button(text="Multiplicar Matrices Transpuestas", size_hint=(1, 0.1))
+        boton_multiplicar.bind(on_press=self.multiplicar_transpuestas)
+
+        layout.add_widget(self.matriz_input)
+        layout.add_widget(boton_multiplicar)
+        layout.add_widget(self.resultado_label)
+
+        # Botón para regresar al menú
+        boton_regresar = Button(text="Regresar al Menú", size_hint=(1, 0.1))
+        boton_regresar.bind(on_press=lambda instance: setattr(self.manager, 'current', 'menu_principal'))
+        layout.add_widget(boton_regresar)
+
+        self.add_widget(layout)
+
+    def multiplicar_transpuestas(self, instance):
+        self.resultado_label.text = "Función no implementada."
+
+class OperacionesVectoresScreen(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        layout = BoxLayout(orientation='vertical')
+        layout.add_widget(Label(text="Operaciones con Vectores", font_size=24))
+
+        self.vector1_input = TextInput(hint_text="Ingrese el primer vector (ej: 1,2,3)", multiline=False, size_hint=(1, 0.1))
+        self.vector2_input = TextInput(hint_text="Ingrese el segundo vector (ej: 4,5,6)", multiline=False, size_hint=(1, 0.1))
+        self.resultado_label = Label(text="", font_size=20)
+
+        boton_combinar = Button(text="Combinar Vectores", size_hint=(1, 0.1))
+        boton_combinar.bind(on_press=self.combinar_vectores)
+
+        layout.add_widget(self.vector1_input)
+        layout.add_widget(self.vector2_input)
+        layout.add_widget(boton_combinar)
+        layout.add_widget(self.resultado_label)
+
+        # Botón para regresar al menú
+        boton_regresar = Button(text="Regresar al Menú", size_hint=(1, 0.1))
+        boton_regresar.bind(on_press=lambda instance: setattr(self.manager, 'current', 'menu_principal'))
+        layout.add_widget(boton_regresar)
+
+        self.add_widget(layout)
+
+    def combinar_vectores(self, instance):
+        self.resultado_label.text = "Función no implementada."
+
+class ProductoMatrizVectorScreen(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        layout = BoxLayout(orientation='vertical')
+        layout.add_widget(Label(text="Producto Matriz-Vector", font_size=24))
+
+        self.matriz_input = TextInput(hint_text="Ingrese la matriz (ej: 1,2;3,4)", multiline=False, size_hint=(1, 0.1))
+        self.vector_input = TextInput(hint_text="Ingrese el vector (ej: 5,6)", multiline=False, size_hint=(1, 0.1))
+        self.resultado_label = Label(text="", font_size=20)
+
+        boton_producto = Button(text="Calcular Producto", size_hint=(1, 0.1))
+        boton_producto.bind(on_press=self.calcular_producto)
+
+        layout.add_widget(self.matriz_input)
+        layout.add_widget(self.vector_input)
+        layout.add_widget(boton_producto)
+        layout.add_widget(self.resultado_label)
+
+        # Botón para regresar al menú
+        boton_regresar = Button(text="Regresar al Menú", size_hint=(1, 0.1))
+        boton_regresar.bind(on_press=lambda instance: setattr(self.manager, 'current', 'menu_principal'))
+        layout.add_widget(boton_regresar)
+
+        self.add_widget(layout)
+
+    def calcular_producto(self, instance):
+        self.resultado_label.text = "Función no implementada."
+
+class MetodoBiseccionScreen(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        layout = BoxLayout(orientation='vertical')
+        layout.add_widget(Label(text="Método de Bisección", font_size=24))
+
+        self.funcion_input = TextInput(hint_text="Ingrese la función (ej: x**2-4)", multiline=False, size_hint=(1, 0.1))
+        self.a_input = TextInput(hint_text="Ingrese a", multiline=False, size_hint=(1, 0.1))
+        self.b_input = TextInput(hint_text="Ingrese b", multiline=False, size_hint=(1, 0.1))
+        self.resultado_label = Label(text="", font_size=20)
+
+        boton_calcular = Button(text="Calcular Bisección", size_hint=(1, 0.1))
+        boton_calcular.bind(on_press=self.calcular_biseccion)
+
+        layout.add_widget(self.funcion_input)
+        layout.add_widget(self.a_input)
+        layout.add_widget(self.b_input)
+        layout.add_widget(boton_calcular)
+        layout.add_widget(self.resultado_label)
+
+        # Botón para regresar al menú
+        boton_regresar = Button(text="Regresar al Menú", size_hint=(1, 0.1))
+        boton_regresar.bind(on_press=lambda instance: setattr(self.manager, 'current', 'menu_principal'))
+        layout.add_widget(boton_regresar)
+
+        self.add_widget(layout)
+
+    def calcular_biseccion(self, instance):
+        self.resultado_label.text = "Función no implementada."
+
+class NewtonRaphsonScreen(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        layout = BoxLayout(orientation='vertical')
+        layout.add_widget(Label(text="Método de Newton-Raphson", font_size=24))
+
+        self.funcion_input = TextInput(hint_text="Ingrese la función (ej: x**2-4)", multiline=False, size_hint=(1, 0.1))
+        self.x0_input = TextInput(hint_text="Ingrese x0", multiline=False, size_hint=(1, 0.1))
+        self.resultado_label = Label(text="", font_size=20)
+
+        boton_calcular = Button(text="Calcular Newton-Raphson", size_hint=(1, 0.1))
+        boton_calcular.bind(on_press=self.calcular_newton)
+
+        layout.add_widget(self.funcion_input)
+        layout.add_widget(self.x0_input)
+        layout.add_widget(boton_calcular)
+        layout.add_widget(self.resultado_label)
+
+        # Botón para regresar al menú
+        boton_regresar = Button(text="Regresar al Menú", size_hint=(1, 0.1))
+        boton_regresar.bind(on_press=lambda instance: setattr(self.manager, 'current', 'menu_principal'))
+        layout.add_widget(boton_regresar)
+
+        self.add_widget(layout)
+
+    def calcular_newton(self, instance):
+        self.resultado_label.text = "Función no implementada."
+
+class FalsaPosicionSecanteScreen(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        layout = BoxLayout(orientation='vertical')
+        layout.add_widget(Label(text="Método de Falsa Posición y Secante", font_size=24))
+
+        self.funcion_input = TextInput(hint_text="Ingrese la función (ej: x**2-4)", multiline=False, size_hint=(1, 0.1))
+        self.a_input = TextInput(hint_text="Ingrese a", multiline=False, size_hint=(1, 0.1))
+        self.b_input = TextInput(hint_text="Ingrese b", multiline=False, size_hint=(1, 0.1))
+        self.resultado_label = Label(text="", font_size=20)
+
+        boton_calcular = Button(text="Calcular Falsa Posición", size_hint=(1, 0.1))
+        boton_calcular.bind(on_press=self.calcular_falsa)
+
+        layout.add_widget(self.funcion_input)
+        layout.add_widget(self.a_input)
+        layout.add_widget(self.b_input)
+        layout.add_widget(boton_calcular)
+        layout.add_widget(self.resultado_label)
+
+        # Botón para regresar al menú
+        boton_regresar = Button(text="Regresar al Menú", size_hint=(1, 0.1))
+        boton_regresar.bind(on_press=lambda instance: setattr(self.manager, 'current', 'menu_principal'))
+        layout.add_widget(boton_regresar)
+
+        self.add_widget(layout)
+
+    def calcular_falsa(self, instance):
+        self.resultado_label.text = "Función no implementada."
+
+# Clase principal de la aplicación
 class AlgebraLinealApp(App):
     def build(self):
         sm = ScreenManager()
-        sm.add_widget(BienvenidaScreen(name="bienvenida"))
-        sm.add_widget(FuncionesScreen(name="funciones"))
-
-        funciones = [
-            ("Transponer Matriz", "transponer_matriz", transponer_matriz),
-            ("Determinante por Cofactor", "determinante_cofactor", determinante_por_cofactor),
-            ("Método de Cramer", "metodo_cramer", resolver_sistema_cramer),
-            ("Matriz Escalonada", "matriz_escalonada", escalonar_matriz),
-            ("Matriz Inversa", "matriz_inversa", matriz_inversa),
-            ("Multiplicación de Matrices", "multiplicacion_matrices", multiplicar_matrices),
-            ("Multiplicación de Matrices Transpuestas", "multiplicacion_matrices_transpuestas", multiplicar_matrices_transpuestas),
-            ("Operaciones con Vectores", "operaciones_vectores", combinar_vectores),
-            ("Producto Matriz-Vector", "producto_matriz_vector", producto_matriz_vector),
-        ]
-
-        for nombre, pantalla, funcion in funciones:
-            sm.add_widget(FuncionScreen(nombre, funcion, name=pantalla))
-
+        sm.add_widget(MenuPrincipal(name="menu_principal"))
+        sm.add_widget(EspaciosVectorialesScreen(name="espacios_vectoriales"))
+        sm.add_widget(MatrizTranspuestaScreen(name="matriz_transpuesta"))
+        sm.add_widget(DeterminanteCofactorScreen(name="determinante_cofactor"))
+        sm.add_widget(MetodoCramerScreen(name="metodo_cramer"))
+        sm.add_widget(MatrizEscalonadaScreen(name="matriz_escalonada"))
+        sm.add_widget(MatrizInversaScreen(name="matriz_inversa"))
+        sm.add_widget(MultiplicacionMatricesScreen(name="multiplicacion_matrices"))
+        sm.add_widget(MultiplicacionTranspuestasScreen(name="multiplicacion_matrices_transpuestas"))
+        sm.add_widget(OperacionesVectoresScreen(name="operaciones_vectores"))
+        sm.add_widget(ProductoMatrizVectorScreen(name="producto_matriz_vector"))
+        sm.add_widget(MetodoBiseccionScreen(name="metodo_biseccion"))
+        sm.add_widget(NewtonRaphsonScreen(name="newton_raphson"))
+        sm.add_widget(FalsaPosicionSecanteScreen(name="falsa_posicion_secante"))
         return sm
-
 
 if __name__ == "__main__":
     AlgebraLinealApp().run()
