@@ -14,7 +14,7 @@ from funciiones.EspaciosVectoriales1 import (
 
 from funciiones.MatricesTranspuestas import transponer_matriz
 from funciiones.DeterminanteXCofactor import determinante_por_cofactor
-from funciiones.MatrizCramer import identificar_formato, procesar_ecuaciones, procesar_matriz, resolver_cramer_general, formatear_resultados
+from funciiones.MatrizCramer import procesar_matriz, resolver_cramer_general, formatear_resultados
 from funciiones.MatrizEscalonadayGJ import escalonar_matriz
 from funciiones.MatrizInversa import matriz_inversa
 from funciiones.MultiplicacionMatrices import multiplicar_matrices
@@ -214,21 +214,21 @@ class MetodoCramerScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         layout = BoxLayout(orientation='vertical')
-        layout.add_widget(Label(text="Método de Cramer", font_size=24))
+        layout.add_widget(Label(text="Método de Cramer (Solo Matrices)", font_size=24))
 
-        # Entrada para las ecuaciones o matriz
-        self.ecuaciones_input = TextInput(
-            hint_text="Ingrese las ecuaciones o la matriz separadas por ';'\nEj:\n7,8,29;\n5,11,26",
+        # Entrada para la matriz
+        self.matriz_input = TextInput(
+            hint_text="Ingrese la matriz separada por ';' (ej: 7,8,29;5,11,26)",
             multiline=True, size_hint=(1, 0.4)
         )
         self.resultado_label = Label(text="", font_size=20)
 
         # Botón para resolver
-        boton_resolver = Button(text="Resolver con Cramer", size_hint=(1, 0.1))
+        boton_resolver = Button(text="Resolver Sistema", size_hint=(1, 0.1))
         boton_resolver.bind(on_press=self.resolver_cramer)
 
         # Agregar widgets al layout
-        layout.add_widget(self.ecuaciones_input)
+        layout.add_widget(self.matriz_input)
         layout.add_widget(boton_resolver)
         layout.add_widget(self.resultado_label)
 
@@ -241,16 +241,10 @@ class MetodoCramerScreen(Screen):
 
     def resolver_cramer(self, instance):
         try:
-            entrada = self.ecuaciones_input.text.strip()
-            formato = identificar_formato(entrada)
+            entrada = self.matriz_input.text.strip()
+            matriz, vector = procesar_matriz(entrada)
 
-            if formato == "ecuaciones":
-                ecuaciones_texto = entrada.split(";")
-                matriz, vector = procesar_ecuaciones(ecuaciones_texto)
-            elif formato == "matriz":
-                matriz, vector = procesar_matriz(entrada)
-
-            # Resolver el sistema con la regla generalizada
+            # Resolver el sistema con la regla de Cramer
             soluciones = resolver_cramer_general(matriz, vector)
 
             # Mostrar los resultados
