@@ -268,8 +268,8 @@ class MatrizInversaScreen(Screen):
         layout = BoxLayout(orientation='vertical')
         layout.add_widget(Label(text="Matriz Inversa", font_size=24))
 
-        self.matriz_input = TextInput(hint_text="Ingrese la matriz (ej: 1,2,3;4,5,6)", multiline=False, size_hint=(1, 0.1))
-        self.resultado_label = Label(text="", font_size=20)
+        self.matriz_input = TextInput(hint_text="Ingrese la matriz (ej: 1,2,3;4,5,6;7,8,9)", multiline=False, size_hint=(1, 0.1))
+        self.resultado_label = Label(text="", font_size=20, font_name="RobotoMono-Regular")  # Fuente monoespaciada
 
         boton_calcular = Button(text="Calcular Inversa", size_hint=(1, 0.1))
         boton_calcular.bind(on_press=self.calcular_inversa)
@@ -286,7 +286,18 @@ class MatrizInversaScreen(Screen):
         self.add_widget(layout)
 
     def calcular_inversa(self, instance):
-        self.resultado_label.text = "Función no implementada."
+        try:
+            # Convertir la entrada en una matriz
+            matriz = [list(map(float, fila.split(","))) for fila in self.matriz_input.text.split(";")]
+            resultado = matriz_inversa(matriz)
+            # Formatear la salida como una matriz con mejor alineación
+            resultado_formateado = "\n".join(["  ".join(f"{elem:6.2f}" for elem in fila) for fila in resultado])
+            self.resultado_label.text = f"Inversa:\n{resultado_formateado}"
+        except ValueError as e:
+            self.resultado_label.text = f"Error: {str(e)}"
+        except Exception as e:
+            self.resultado_label.text = f"Error inesperado: {str(e)}"
+
 
 class MultiplicacionMatricesScreen(Screen):
     def __init__(self, **kwargs):
