@@ -14,7 +14,7 @@ from funciiones.EspaciosVectoriales1 import (
 
 from funciiones.MatricesTranspuestas import transponer_matriz
 from funciiones.DeterminanteXCofactor import determinante_por_cofactor
-from funciiones.MatrizCramer import resolver_sistema_cramer
+from funciiones.MatrizCramer import identificar_formato, procesar_ecuaciones, procesar_matriz, resolver_cramer_general, formatear_resultados
 from funciiones.MatrizEscalonadayGJ import escalonar_matriz
 from funciiones.MatrizInversa import matriz_inversa
 from funciiones.MultiplicacionMatrices import multiplicar_matrices
@@ -216,14 +216,20 @@ class MetodoCramerScreen(Screen):
         layout = BoxLayout(orientation='vertical')
         layout.add_widget(Label(text="Método de Cramer", font_size=24))
 
-        self.matriz_input = TextInput(hint_text="Ingrese la matriz (ej: 1,2,3;4,5,6)", multiline=False, size_hint=(1, 0.1))
+        # Entrada para las ecuaciones o matriz
+        self.ecuaciones_input = TextInput(
+            hint_text="Ingrese las ecuaciones o la matriz separadas por ';'\nEj:\n7,8,29;\n5,11,26",
+            multiline=True, size_hint=(1, 0.4)
+        )
         self.resultado_label = Label(text="", font_size=20)
 
-        boton_calcular = Button(text="Resolver con Cramer", size_hint=(1, 0.1))
-        boton_calcular.bind(on_press=self.resolver_cramer)
+        # Botón para resolver
+        boton_resolver = Button(text="Resolver con Cramer", size_hint=(1, 0.1))
+        boton_resolver.bind(on_press=self.resolver_cramer)
 
-        layout.add_widget(self.matriz_input)
-        layout.add_widget(boton_calcular)
+        # Agregar widgets al layout
+        layout.add_widget(self.ecuaciones_input)
+        layout.add_widget(boton_resolver)
         layout.add_widget(self.resultado_label)
 
         # Botón para regresar al menú
@@ -234,7 +240,27 @@ class MetodoCramerScreen(Screen):
         self.add_widget(layout)
 
     def resolver_cramer(self, instance):
-        self.resultado_label.text = "Función no implementada."
+        try:
+            entrada = self.ecuaciones_input.text.strip()
+            formato = identificar_formato(entrada)
+
+            if formato == "ecuaciones":
+                ecuaciones_texto = entrada.split(";")
+                matriz, vector = procesar_ecuaciones(ecuaciones_texto)
+            elif formato == "matriz":
+                matriz, vector = procesar_matriz(entrada)
+
+            # Resolver el sistema con la regla generalizada
+            soluciones = resolver_cramer_general(matriz, vector)
+
+            # Mostrar los resultados
+            self.resultado_label.text = f"Soluciones: {formatear_resultados(soluciones)}"
+
+        except ValueError as e:
+            self.resultado_label.text = f"Error: {e}"
+        except Exception as e:
+            self.resultado_label.text = f"Error inesperado: {e}"
+
 
 class MatrizEscalonadaScreen(Screen):
     def __init__(self, **kwargs):
