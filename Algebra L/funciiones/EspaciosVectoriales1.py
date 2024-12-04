@@ -29,6 +29,9 @@ def escalar_por_vector(escalar, vector):
     :param vector: Lista representando el vector.
     :return: Lista con el vector escalado.
     """
+    # Validar que el vector sea una lista de números
+    if not isinstance(vector, list) or not all(isinstance(x, (int, float)) for x in vector):
+        raise ValueError("El vector debe ser una lista de números.")
     return [escalar * x for x in vector]
 
 
@@ -38,6 +41,9 @@ def norma_vector(vector):
     :param vector: Lista representando el vector.
     :return: Número con la norma del vector.
     """
+    # Validar que el vector sea una lista de números
+    if not isinstance(vector, list) or not all(isinstance(x, (int, float)) for x in vector):
+        raise ValueError("El vector debe ser una lista de números.")
     return sum(x ** 2 for x in vector) ** 0.5
 
 
@@ -50,4 +56,9 @@ def producto_punto(v1, v2):
     """
     if len(v1) != len(v2):
         raise ValueError("Los vectores deben tener la misma dimensión para calcular el producto punto.")
+    # Validar que ambos vectores sean listas de números
+    if not (isinstance(v1, list) and isinstance(v2, list)):
+        raise ValueError("Ambos vectores deben ser listas de números.")
+    if not (all(isinstance(x, (int, float)) for x in v1) and all(isinstance(x, (int, float)) for x in v2)):
+        raise ValueError("Ambos vectores deben contener solo números.")
     return sum(a * b for a, b in zip(v1, v2))
